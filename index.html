@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CashFlowSense — Repayment Rhythm Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --surface-0:#0D131E;
+    --surface-1:#141C2B;
+    --surface-2:#1B2537;
+    --surface-3:#232F46;
+    --hair:#2B3448;
+    --ink-hi:#F1EFEA;
+    --ink-lo:#8D96AC;
+    --ink-faint:#5C6479;
+    --gold:#C9A227;
+    --gold-soft:#8A741F;
+    --gold-dim:rgba(201,162,39,0.12);
+    --teal:#4FBF9F;
+    --teal-dim:rgba(79,191,159,0.12);
+    --coral:#E2694F;
+    --coral-dim:rgba(226,105,79,0.12);
+    --blue:#4E8CEE;
+    --serif:"Fraunces", Georgia, serif;
+    --sans:"IBM Plex Sans", -apple-system, sans-serif;
+    --mono:"IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--surface-0);
+    color:var(--ink-hi);
+    font-family:var(--sans);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  a{ color:inherit; text-decoration:none; }
+
+  .frame{
+    max-width:1240px;
+    margin:0 auto;
+    padding:32px 24px 64px;
+  }
+
+  /* ---------- Header ---------- */
+  .masthead{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:20px;
+    padding-bottom:20px;
+    border-bottom:1px solid var(--hair);
+    margin-bottom:20px;
+    flex-wrap:wrap;
+  }
+  .masthead .brand{
+    font-family:var(--serif);
+    font-size:30px;
+    font-weight:500;
+    letter-spacing:0.2px;
+  }
+  .masthead .brand .dot{ color:var(--gold); }
+  .masthead .tagline{
+    font-family:var(--sans);
+    color:var(--ink-lo);
+    font-size:14px;
+    max-width:480px;
+    line-height:1.5;
+    margin-top:4px;
+  }
+  .masthead .meta{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-faint);
+    text-align:right;
+    line-height:1.7;
+  }
+  .badge-hackathon{
+    display:inline-block;
+    background:var(--gold-dim);
+    color:var(--gold);
+    border:1px solid var(--gold-soft);
+    padding:2px 8px;
+    border-radius:2px;
+    font-size:10.5px;
+    letter-spacing:0.5px;
+    margin-bottom:4px;
+  }
+
+  /* ---------- Top KPI Strip ---------- */
+  .kpi-strip{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:12px;
+    margin-bottom:24px;
+  }
+  @media (max-width: 800px){
+    .kpi-strip{ grid-template-columns:repeat(2, 1fr); }
+  }
+  @media (max-width: 480px){
+    .kpi-strip{ grid-template-columns:1fr; }
+  }
+  .kpi-card{
+    background:var(--surface-1);
+    border:1px solid var(--hair);
+    padding:14px 16px;
+    border-radius:2px;
+    transition:border-color 0.2s;
+  }
+  .kpi-card:hover{ border-color:var(--gold-soft); }
+  .kpi-title{
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:0.5px;
+    color:var(--ink-faint);
+    text-transform:uppercase;
+  }
+  .kpi-val{
+    font-family:var(--serif);
+    font-size:24px;
+    font-weight:600;
+    color:var(--ink-hi);
+    margin:6px 0 2px;
+  }
+  .kpi-sub{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--teal);
+  }
+  .kpi-sub.neutral{ color:var(--ink-lo); }
+
+  /* ---------- Board Layout ---------- */
+  .board{
+    display:grid;
+    grid-template-columns:230px 1fr 320px;
+    gap:0;
+    border:1px solid var(--hair);
+    background:var(--surface-0);
+  }
+  @media (max-width: 1040px){
+    .board{ grid-template-columns:1fr; }
+    .rail-left{ border-right:none; border-bottom:1px solid var(--hair); }
+    .rail-center{ border-right:none; border-bottom:1px solid var(--hair); }
+  }
+
+  /* ---------- Left rail: borrower list ---------- */
+  .rail-left{
+    padding:20px 0;
+    border-right:1px solid var(--hair);
+    background:var(--surface-1);
+  }
+  .rail-left h2{
+    font-family:var(--mono);
+    font-size:11px;
+    font-weight:500;
+    color:var(--ink-faint);
+    letter-spacing:0.5px;
+    margin:0 20px 12px;
+  }
+  .borrower-item{
+    display:block;
+    width:100%;
+    text-align:left;
+    background:none;
+    border:none;
+    color:var(--ink-lo);
+    font-family:var(--sans);
+    font-size:14px;
+    padding:12px 20px;
+    cursor:pointer;
+    border-left:3px solid transparent;
+    transition:background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .borrower-item .name{ display:block; color:inherit; font-weight:500; }
+  .borrower-item .role{
+    display:block;
+    font-size:11px;
+    color:var(--ink-faint);
+    margin-top:2px;
+    font-family:var(--mono);
+  }
+  .borrower-item:hover{ background:var(--surface-2); color:var(--ink-hi); }
+  .borrower-item:focus-visible{ outline:2px solid var(--gold); outline-offset:-2px; }
+  .borrower-item.active{
+    background:var(--surface-2);
+    color:var(--ink-hi);
+    border-left-color:var(--gold);
+  }
+  .borrower-item .status-dot{
+    display:inline-block;
+    width:7px; height:7px;
+    border-radius:50%;
+    margin-right:8px;
+    position:relative;
+    top:-1px;
+  }
+
+  .rail-left-footer{
+    padding:16px 20px;
+    margin-top:16px;
+    border-top:1px solid var(--hair);
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-faint);
+    line-height:1.5;
+  }
+
+  /* ---------- Center: rhythm chart ---------- */
+  .rail-center{
+    padding:24px 28px 24px;
+    border-right:1px solid var(--hair);
+    min-width:0;
+  }
+  .panel-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:8px;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .panel-label{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-faint);
+    letter-spacing:0.5px;
+  }
+  .quick-actions{
+    display:flex;
+    gap:8px;
+  }
+  .btn-sm{
+    font-family:var(--mono);
+    font-size:11px;
+    padding:4px 9px;
+    border:1px solid var(--hair);
+    background:transparent;
+    color:var(--ink-lo);
+    cursor:pointer;
+    border-radius:2px;
+    transition:all 0.15s ease;
+  }
+  .btn-sm:hover{ border-color:var(--gold); color:var(--ink-hi); }
+  .btn-sm.active{ background:var(--gold-dim); border-color:var(--gold); color:var(--gold); }
+
+  .borrower-heading{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .borrower-heading h1{
+    font-family:var(--serif);
+    font-weight:500;
+    font-size:24px;
+    margin:0;
+  }
+  .status-pill{
+    font-family:var(--mono);
+    font-size:11.5px;
+    padding:5px 11px;
+    border:1px solid var(--hair);
+    white-space:nowrap;
+    border-radius:2px;
+  }
+  .status-pill.seasonal{ color:var(--gold); border-color:var(--gold-soft); background:var(--gold-dim); }
+  .status-pill.declining{ color:var(--coral); border-color:#7A3B2E; background:var(--coral-dim); }
+  .status-pill.healthy{ color:var(--teal); border-color:#2E7A63; background:var(--teal-dim); }
+
+  /* Interactive Simulator Control Strip */
+  .simulator-strip{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:var(--surface-1);
+    border:1px dashed var(--hair);
+    padding:10px 14px;
+    margin-bottom:16px;
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--ink-lo);
+    border-radius:2px;
+  }
+  .simulator-strip input[type=range]{
+    accent-color:var(--gold);
+    cursor:pointer;
+  }
+
+  .chart-wrap{ margin-bottom:8px; position:relative; }
+  .chart-wrap svg{ width:100%; height:auto; display:block; }
+
+  .legend{
+    display:flex;
+    gap:20px;
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-lo);
+    margin-top:10px;
+    flex-wrap:wrap;
+  }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .legend .swatch{ width:14px; height:2px; display:inline-block; }
+  .legend .swatch.dash{ background:repeating-linear-gradient(90deg, var(--ink-faint) 0 4px, transparent 4px 7px); }
+  .legend .swatch.line{ background:var(--ink-hi); height:2.5px; }
+  .legend .dotwatch{ width:8px; height:8px; border-radius:50%; display:inline-block; }
+
+  .note{
+    font-family:var(--sans);
+    font-size:13px;
+    color:var(--ink-lo);
+    line-height:1.6;
+    margin-top:18px;
+    padding-top:16px;
+    border-top:1px solid var(--hair);
+  }
+  .note strong{ color:var(--ink-hi); font-weight:600; }
+
+  /* ---------- Payment breakdown ---------- */
+  .breakdown{
+    margin-top:22px;
+    padding-top:18px;
+    border-top:1px solid var(--hair);
+  }
+  .breakdown-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:12px;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .breakdown-head p{
+    font-family:var(--sans);
+    font-size:12.5px;
+    color:var(--ink-lo);
+    margin:3px 0 0;
+    max-width:560px;
+    line-height:1.5;
+  }
+  .month-picker{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-bottom:14px;
+  }
+  .month-chip{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-lo);
+    background:none;
+    border:1px solid var(--hair);
+    padding:6px 9px;
+    cursor:pointer;
+    border-radius:2px;
+    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .month-chip:hover{ border-color:var(--gold-soft); color:var(--ink-hi); }
+  .month-chip:focus-visible{ outline:2px solid var(--gold); outline-offset:1px; }
+  .month-chip.active{
+    border-color:var(--gold-soft);
+    color:var(--gold);
+    background:rgba(201,162,39,0.12);
+  }
+  .month-chip.shortfall.active{
+    border-color:#7A3B2E;
+    color:var(--coral);
+    background:rgba(226,105,79,0.14);
+  }
+
+  .ledger{
+    border:1px solid var(--hair);
+    background:var(--surface-1);
+    border-radius:2px;
+  }
+  .ledger-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:9px 14px;
+    font-family:var(--mono);
+    font-size:12.5px;
+    border-bottom:1px solid var(--hair);
+    color:var(--ink-lo);
+  }
+  .ledger-row:last-child{ border-bottom:none; }
+  .ledger-row .tx-date{ color:var(--ink-faint); min-width:70px; }
+  .ledger-row .tx-amount{ color:var(--ink-hi); }
+  .ledger-row.total{
+    background:var(--surface-2);
+    font-weight:600;
+  }
+  .ledger-row.total .tx-amount{ color:var(--ink-hi); }
+  .breakdown-status{
+    margin-top:10px;
+    font-family:var(--sans);
+    font-size:12.5px;
+    padding:9px 12px;
+    border-left:3px solid var(--hair);
+    background:var(--surface-1);
+  }
+  .breakdown-status.ok{ border-left-color:var(--teal); color:var(--teal); }
+  .breakdown-status.late{ border-left-color:var(--gold); color:var(--gold); }
+  .breakdown-status.short{ border-left-color:var(--coral); color:var(--coral); }
+
+  /* ---------- Right rail: assessment ---------- */
+  .rail-right{
+    padding:24px 24px 20px;
+    background:var(--surface-1);
+  }
+  .assessment-block + .assessment-block{
+    margin-top:22px;
+    padding-top:20px;
+    border-top:1px solid var(--hair);
+  }
+  .rail-right h3{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:0.5px;
+    color:var(--ink-faint);
+    margin:0 0 12px;
+    font-weight:500;
+  }
+  .evidence-list{ list-style:none; margin:0; padding:0; }
+  .evidence-list li{
+    font-size:13px;
+    line-height:1.55;
+    color:var(--ink-lo);
+    padding-left:14px;
+    position:relative;
+    margin-bottom:10px;
+  }
+  .evidence-list li::before{
+    content:"—";
+    position:absolute;
+    left:0;
+    color:var(--gold);
+  }
+
+  .confidence-meter{
+    margin-bottom:14px;
+    background:var(--surface-2);
+    border:1px solid var(--hair);
+    padding:10px 12px;
+    border-radius:2px;
+  }
+  .conf-header{
+    display:flex;
+    justify-content:space-between;
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-lo);
+    margin-bottom:6px;
+  }
+  .conf-bar-bg{
+    background:var(--surface-0);
+    height:6px;
+    border-radius:3px;
+    overflow:hidden;
+  }
+  .conf-bar-fill{
+    height:100%;
+    background:var(--teal);
+    width:94%;
+  }
+
+  .plan-summary{
+    font-family:var(--serif);
+    font-size:16.5px;
+    line-height:1.45;
+    color:var(--ink-hi);
+    margin-bottom:14px;
+  }
+  .plan-row{
+    display:flex;
+    justify-content:space-between;
+    font-family:var(--mono);
+    font-size:12.5px;
+    padding:7px 0;
+    border-bottom:1px solid var(--hair);
+    color:var(--ink-lo);
+  }
+  .plan-row:last-child{ border-bottom:none; }
+  .plan-row .label{ color:var(--ink-faint); }
+  .plan-row .value{ color:var(--ink-hi); }
+  .plan-row .value.cut{ color:var(--gold); font-weight:600; }
+
+  .cta-row{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-top:18px;
+  }
+  .cta-row-actions{
+    display:flex;
+    gap:8px;
+  }
+  .btn{
+    font-family:var(--sans);
+    font-size:12.5px;
+    font-weight:500;
+    padding:9px 14px;
+    border:1px solid var(--hair);
+    background:transparent;
+    color:var(--ink-lo);
+    cursor:pointer;
+    border-radius:2px;
+    transition:all 0.15s ease;
+    text-align:center;
+  }
+  .btn:hover{ border-color:var(--gold-soft); color:var(--ink-hi); }
+  .btn:focus-visible{ outline:2px solid var(--gold); outline-offset:1px; }
+  .btn.primary{
+    border-color:var(--gold-soft);
+    background:var(--gold);
+    color:#000;
+    font-weight:600;
+  }
+  .btn.primary:hover{
+    background:#d8b030;
+    color:#000;
+  }
+  .btn.secondary{
+    border-color:var(--hair);
+    color:var(--ink-hi);
+  }
+
+  /* ---------- Modals ---------- */
+  .modal-overlay{
+    display:none;
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background:rgba(10, 15, 25, 0.85);
+    backdrop-filter:blur(4px);
+    z-index:999;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .modal-overlay.active{ display:flex; }
+  .modal-box{
+    background:var(--surface-1);
+    border:1px solid var(--hair);
+    max-width:580px;
+    width:100%;
+    padding:28px;
+    border-radius:4px;
+    box-shadow:0 18px 45px rgba(0,0,0,0.6);
+  }
+  .modal-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:18px;
+    border-bottom:1px solid var(--hair);
+    padding-bottom:12px;
+  }
+  .modal-header h3{
+    margin:0;
+    font-family:var(--serif);
+    font-size:20px;
+    color:var(--ink-hi);
+  }
+  .modal-close{
+    background:none;
+    border:none;
+    color:var(--ink-lo);
+    font-size:20px;
+    cursor:pointer;
+  }
+  .modal-close:hover{ color:var(--ink-hi); }
+
+  /* Comparison Grid */
+  .comp-table{
+    width:100%;
+    border-collapse:collapse;
+    font-family:var(--sans);
+    font-size:13px;
+    margin-bottom:18px;
+  }
+  .comp-table th, .comp-table td{
+    padding:10px 12px;
+    border:1px solid var(--hair);
+    text-align:left;
+  }
+  .comp-table th{
+    font-family:var(--mono);
+    font-size:11px;
+    background:var(--surface-2);
+    color:var(--ink-lo);
+  }
+  .comp-table td.bad{ color:var(--coral); }
+  .comp-table td.good{ color:var(--teal); font-weight:500; }
+
+  /* Phone Mockup for WhatsApp Preview */
+  .phone-screen{
+    background:#0B141B;
+    border:1px solid #233138;
+    border-radius:12px;
+    padding:16px;
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  .phone-header{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    border-bottom:1px solid #1F2C34;
+    padding-bottom:10px;
+    margin-bottom:14px;
+  }
+  .phone-avatar{
+    width:34px; height:34px;
+    border-radius:50%;
+    background:var(--gold);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:bold;
+    color:#000;
+    font-size:13px;
+  }
+  .phone-contact{ font-size:13px; color:#E9EDEF; font-weight:600; }
+  .phone-status{ font-size:11px; color:#8696A0; }
+  .whatsapp-bubble{
+    background:#005C4B;
+    color:#E9EDEF;
+    font-size:12.5px;
+    line-height:1.5;
+    padding:10px 14px;
+    border-radius:8px 8px 0 8px;
+    max-width:92%;
+    margin-left:auto;
+    position:relative;
+  }
+  .whatsapp-meta{
+    font-size:10px;
+    color:#8696A0;
+    text-align:right;
+    margin-top:4px;
+  }
+
+  /* Footer */
+  footer{
+    margin-top:24px;
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-faint);
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  footer a{ text-decoration:underline; }
+
+  @media (prefers-reduced-motion: reduce){
+    * { transition:none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <!-- MASTHEAD -->
+  <div class="masthead">
+    <div>
+      <span class="badge-hackathon">MANIPAL HACKATHON 2026 (MIT) · ROUND 1 PROTOTYPE</span>
+      <div class="brand">CashFlowSense<span class="dot">.</span></div>
+      <div class="tagline">Repayment plans built around when money actually arrives, not arbitrary calendar due dates.</div>
+    </div>
+    <div class="meta">
+      PORTFOLIO: SAMPLE-MFI-04 · LENDER INTELLIGENCE SUITE<br>
+      THEME: THE BUTTERFLY EFFECT IN FINANCIAL INCLUSION<br>
+      <span style="color:var(--teal);">● REAL-TIME REPAYMENT RHYTHM ENGINE ACTIVE</span>
+    </div>
+  </div>
+
+  <!-- PORTFOLIO KPI STRIP -->
+  <div class="kpi-strip">
+    <div class="kpi-card">
+      <div class="kpi-title">Collection Efficiency</div>
+      <div class="kpi-val" id="kpiEfficiency">98.6%</div>
+      <div class="kpi-sub">↑ 14.2% vs. rigid calendar EMI</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title">Early Default (30+ DPD)</div>
+      <div class="kpi-val" style="color:var(--coral);">2.4%</div>
+      <div class="kpi-sub">↓ Down from 18.7% baseline</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title">Protected Portfolio Capital</div>
+      <div class="kpi-val" style="color:var(--gold);">₹42.8L</div>
+      <div class="kpi-sub neutral">Preserved across 340 active loans</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title">Rhythm Restructure Index</div>
+      <div class="kpi-val" style="color:var(--teal);">100%</div>
+      <div class="kpi-sub">Zero tenure inflation · IRR held</div>
+    </div>
+  </div>
+
+  <!-- MAIN INTERACTIVE BOARD -->
+  <div class="board">
+
+    <!-- LEFT RAIL: BORROWER SELECTION -->
+    <div class="rail-left">
+      <h2>SELECT BORROWER ARCHETYPE</h2>
+      <div id="borrowerList"></div>
+
+      <div class="rail-left-footer">
+        <strong>Archetype Scope:</strong><br>
+        • Agricultural seasonal flows<br>
+        • Platform gig economy<br>
+        • Micro-retail enterprise<br>
+        • Steady baseline control
+      </div>
+    </div>
+
+    <!-- CENTER RAIL: VISUALIZER -->
+    <div class="rail-center">
+      <div class="panel-header">
+        <div class="panel-label">12-MONTH CASH FLOW RHYTHM VS. FIXED CALENDAR EMI</div>
+        <div class="quick-actions">
+          <button class="btn-sm" id="toggleShockBtn">⚡ Simulate Shock</button>
+          <button class="btn-sm" id="openCompBtn">⚖ Compare Traditional</button>
+          <button class="btn-sm" id="openNotifyBtn">💬 WhatsApp Preview</button>
+        </div>
+      </div>
+
+      <!-- Shock simulator strip (hidden by default) -->
+      <div class="simulator-strip" id="simulatorStrip" style="display:none;">
+        <span>Macro Stress Simulation:</span>
+        <input type="range" id="shockSlider" min="-40" max="40" value="0" step="10">
+        <span id="shockLabel">0% (Baseline)</span>
+        <button class="btn-sm" id="resetShockBtn">Reset</button>
+      </div>
+
+      <div class="borrower-heading">
+        <div>
+          <h1 id="bName">—</h1>
+          <span id="bMetaSubtitle" style="font-family:var(--mono); font-size:12px; color:var(--ink-faint);">—</span>
+        </div>
+        <span class="status-pill" id="statusPill">—</span>
+      </div>
+
+      <div class="chart-wrap">
+        <svg id="chart" viewBox="0 0 700 250" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Cash flow chart"></svg>
+      </div>
+
+      <div class="legend">
+        <span><i class="swatch line"></i> Actual net cash flow</span>
+        <span><i class="swatch dash"></i> Fixed monthly EMI</span>
+        <span><i class="dotwatch" style="background:var(--teal)"></i> Cash flow covered</span>
+        <span><i class="dotwatch" style="background:var(--coral)"></i> Shortfall month</span>
+      </div>
+
+      <div class="note" id="noteBlock"></div>
+
+      <!-- PAYMENT BREAKDOWN & LEDGER -->
+      <div class="breakdown">
+        <div class="breakdown-head">
+          <div>
+            <div class="panel-label" style="margin-bottom:2px;">INTRAL-MONTH INFLOW LEDGER (CLICK MONTH TO INSPECT)</div>
+            <p>Informal income does not land as a single monthly paycheck. Choose any month to inspect incoming cash tranches and repayment liquidity timing.</p>
+          </div>
+        </div>
+        <div class="month-picker" id="monthPicker"></div>
+        <div class="ledger" id="ledger"></div>
+        <div class="breakdown-status" id="breakdownStatus"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT RAIL: ML ENGINE DECISION & ACTION -->
+    <div class="rail-right">
+      <div class="assessment-block">
+        <h3>AI RHYTHM CLASSIFICATION</h3>
+        <div class="confidence-meter">
+          <div class="conf-header">
+            <span>Model Confidence</span>
+            <span id="confVal">96.4%</span>
+          </div>
+          <div class="conf-bar-bg">
+            <div class="conf-bar-fill" id="confBar"></div>
+          </div>
+        </div>
+        <ul class="evidence-list" id="evidenceList"></ul>
+      </div>
+
+      <div class="assessment-block">
+        <h3>ADAPTIVE REPAYMENT SCHEDULE</h3>
+        <div class="plan-summary" id="planSummary"></div>
+        <div id="planRows"></div>
+        <div class="cta-row">
+          <div class="cta-row-actions">
+            <button class="btn primary" id="applyBtn" style="flex:1;">Apply plan</button>
+            <button class="btn secondary" id="overrideBtn">Override</button>
+          </div>
+          <button class="btn" id="exportBtn" style="font-family:var(--mono); font-size:11px;">⬇ Export Schedule (CBS JSON)</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- COMPARISON MODAL (TRADITIONAL VS CASHFLOWSENSE) -->
+  <div class="modal-overlay" id="compModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Traditional Banking vs. CashFlowSense</h3>
+        <button class="modal-close" id="closeCompModal">&times;</button>
+      </div>
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th>Traditional Fixed EMI</th>
+            <th>CashFlowSense Adaptive</th>
+          </tr>
+        </thead>
+        <tbody id="compTableBody">
+          <!-- Populated dynamically -->
+        </tbody>
+      </table>
+      <div style="font-family:var(--mono); font-size:11px; color:var(--ink-faint); line-height:1.5;">
+        *The Butterfly Effect: Adapting EMI collection to borrower cash flow timing eradicates technical defaults, prevents punitive compound penalties, and safeguards lender portfolio quality without lengthening loan tenure.
+      </div>
+    </div>
+  </div>
+
+  <!-- WHATSAPP NOTIFICATION MODAL -->
+  <div class="modal-overlay" id="notifyModal">
+    <div class="modal-box" style="max-width:420px;">
+      <div class="modal-header">
+        <h3>Borrower Vernacular SMS</h3>
+        <button class="modal-close" id="closeNotifyModal">&times;</button>
+      </div>
+      <div class="phone-screen">
+        <div class="phone-header">
+          <div class="phone-avatar">CFS</div>
+          <div>
+            <div class="phone-contact">Samavesh MFI (CashFlowSense)</div>
+            <div class="phone-status">Official verified microloan assistant</div>
+          </div>
+        </div>
+        <div class="whatsapp-bubble" id="whatsappContent">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+      <div style="margin-top:14px; text-align:right;">
+        <button class="btn primary" id="sendSimulatedSMS" style="font-size:11px;">Send Test WhatsApp Alert</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <span>CashFlowSense · Manipal Hackathon 2026 (MIT) Round 1 Prototype Submission</span>
+    <span>Zero backend required · 100% Client-side responsive prototype</span>
+  </footer>
+
+</div>
+
+<script>
+const borrowers = [
+  {
+    id: 'meena',
+    name: 'Meena Kulkarni',
+    role: 'Cotton farmer · 3.2 yr history',
+    location: 'Yavatmal, Maharashtra',
+    payStyle: 'harvest',
+    status: 'seasonal',
+    statusLabel: 'Short-term seasonal strain',
+    confidence: '97.2%',
+    confidencePct: 97,
+    emi: 4200,
+    income: [2600, 2300, 2100, 2400, 3100, 4400, 6800, 8200, 7600, 5200, 3400, 2700],
+    evidence: [
+      'Cash flow dips cyclically every Jun–Sep during sowing & pest-treatment cycles, followed by verified harvest recovery.',
+      'Household savings buffer remained positive across prior 2 monsoons — indicative of predictable agricultural rhythm, not insolvency.',
+      'Zero historical default: repayment delay never exceeded 6 days once crop procurement commenced.'
+    ],
+    planSummary: 'Shift to a harvest-aligned schedule: drop Jun–Sep EMI to ₹2,500, balance it during Oct–Jan harvest. Same total tenure & IRR.',
+    plan: [
+      ['Jun – Sep EMI', '₹2,500', 'cut'],
+      ['Oct – Jan EMI', '₹5,100', ''],
+      ['Tenure change', '0 months (Unchanged)', ''],
+      ['Total Interest / IRR', 'Uncompromised', ''],
+      ['Review trigger', 'Harvest delay > 3 wks', '']
+    ],
+    whatsappMsg: `Namaste Meena ji 🙏\n\nYour MFI loan account (#4902) has been automatically updated with CashFlowSense.\n\nBecause your cotton sowing cycle runs June–Sept, your monthly payment is lowered to ₹2,500 (down from ₹4,200). Your surplus harvest months (Oct–Jan) will cover the balance at ₹5,100.\n\nZero late fees applied. Your credit score remains 100% protected.`,
+    comp: [
+      { dim: 'Default Notices', trad: '4 Overdue Flags (Jun–Sep)', bad: true, cfs: '0 Overdue Flags', good: true },
+      { dim: 'Late Penalty Fees', trad: '₹1,850 cumulative fines', bad: true, cfs: '₹0 fines incurred', good: true },
+      { dim: 'Credit Score (CIBIL)', trad: 'Damaged by 65 points', bad: true, cfs: 'Protected & Pristine', good: true },
+      { dim: 'MFI Recovery Probability', trad: '58% (High NPA Risk)', bad: true, cfs: '99.4% Expected Recovery', good: true }
+    ]
+  },
+  {
+    id: 'arjun',
+    name: 'Arjun Reddy',
+    role: 'App-based delivery · 1.1 yr history',
+    location: 'Bengaluru, Karnataka',
+    payStyle: 'weekly',
+    status: 'healthy',
+    statusLabel: 'Irregular but sufficient',
+    confidence: '95.1%',
+    confidencePct: 95,
+    emi: 3000,
+    income: [3800, 2900, 4400, 3100, 2700, 4900, 3300, 2600, 4100, 3500, 3900, 3000],
+    evidence: [
+      'Gig platform earnings exhibit multi-peak weekly dispersion; 12-month aggregated earning capacity sits comfortably above the ₹3,000 threshold.',
+      'All historical late tranches resolved within 4 days — no systemic elongation in due dates.',
+      'Active gig hours and trip completion rates remain sustained and stable.'
+    ],
+    planSummary: 'Maintain monthly obligation at ₹3,000. Introduce a flexible ±5 day auto-debit window synchronized with weekly platform payouts.',
+    plan: [
+      ['Monthly EMI', '₹3,000', ''],
+      ['Due-date window', '± 5 days flexible', 'cut'],
+      ['Split Micro-Debits', 'Enabled (₹750/wk)', ''],
+      ['Tenure change', 'None', ''],
+      ['Review trigger', '2 consecutive cycle misses', '']
+    ],
+    whatsappMsg: `Hi Arjun! 🛵\n\nWe noticed your delivery earnings hit your bank account weekly on Tuesdays.\n\nCashFlowSense has unlocked a ±5 day flexible window for your ₹3,000 EMI, or optional weekly micro-debits of ₹750.\n\nNo bounce penalties will be charged within your window!`,
+    comp: [
+      { dim: 'Default Notices', trad: 'Repeated ECS Bounce alerts', bad: true, cfs: 'Aligned to Tuesday payouts', good: true },
+      { dim: 'Bounce Charges', trad: '₹450 bank bounce fees', bad: true, cfs: '₹0 bounce charges', good: true },
+      { dim: 'Borrower Anxiety', trad: 'High friction & churn', bad: true, cfs: 'High loyalty & satisfaction', good: true },
+      { dim: 'MFI Recovery Probability', trad: '81%', bad: false, cfs: '98.8%', good: true }
+    ]
+  },
+  {
+    id: 'farhana',
+    name: 'Farhana Sheikh',
+    role: 'General store owner · 2.4 yr history',
+    location: 'Hubballi, Karnataka',
+    payStyle: 'latePartial',
+    status: 'declining',
+    statusLabel: 'Sustained deterioration',
+    confidence: '98.4%',
+    confidencePct: 98,
+    emi: 5000,
+    income: [6200, 5900, 5600, 5100, 4600, 4000, 3400, 2900, 2600, 2300, 2100, 1900],
+    evidence: [
+      'Monotonic revenue contraction across 8 consecutive months without seasonal precedent in business history.',
+      'Progressive delinquency trajectory: historical delay expanded from 4 days → 11 days → 19 days.',
+      'Liquidity reserve buffer (previously 1.5x EMI) has reached total depletion.'
+    ],
+    planSummary: 'Proactive restructuring required: lower monthly EMI to ₹3,250 with a 4-month tenure extension, and route account to a Relationship Manager.',
+    plan: [
+      ['Restructured EMI', '₹3,250', 'cut'],
+      ['Tenure extension', '+ 4 months', ''],
+      ['Field Officer Visit', 'Dispatched for assistance', ''],
+      ['Review trigger', 'Immediate review on next drop', '']
+    ],
+    whatsappMsg: `Dear Farhana ji,\n\nWe understand that local retail conditions have been challenging over recent months.\n\nTo prevent financial strain, Samavesh MFI has restructured your account with a lower EMI of ₹3,250. Your loan officer Rajesh will visit on Thursday to offer inventory working-capital guidance.`,
+    comp: [
+      { dim: 'NPA Status', trad: 'Hard Default & Legal Notice', bad: true, cfs: 'Managed Soft Restructuring', good: true },
+      { dim: 'Borrower Insolvency', trad: 'Complete loss of business', bad: true, cfs: 'Business stabilized', good: true },
+      { dim: 'Capital Write-Off', trad: '100% loss provisioned', bad: true, cfs: '85%+ recoverable asset', good: true },
+      { dim: 'MFI Recovery Probability', trad: '12%', bad: true, cfs: '88.5%', good: true }
+    ]
+  },
+  {
+    id: 'devraj',
+    name: 'Devraj Prasad',
+    role: 'Hardware retailer · 4.0 yr history',
+    location: 'Mangaluru, Karnataka',
+    payStyle: 'lump',
+    status: 'healthy',
+    statusLabel: 'On track (Baseline control)',
+    confidence: '99.1%',
+    confidencePct: 99,
+    emi: 4500,
+    income: [5100, 5300, 5000, 5200, 5400, 5100, 5300, 5500, 5200, 5100, 5400, 5300],
+    evidence: [
+      'Cash flow remains remarkably bounded within a tight, predictable corridor (+/- 4%) across 48 months.',
+      'Pristine track record: zero missed or delayed settlements.',
+      'Benchmark control profile demonstrating optimal standard monthly servicing.'
+    ],
+    planSummary: 'No adjustment required. Maintain standard monthly EMI amortization schedule.',
+    plan: [
+      ['Monthly EMI', '₹4,500', ''],
+      ['Tenure change', 'None', ''],
+      ['Credit Top-Up', 'Pre-approved ₹25,000', 'cut'],
+      ['Review trigger', 'Routine annual review', '']
+    ],
+    whatsappMsg: `Namaste Devraj ji,\n\nThank you for your immaculate repayment track record on loan #8102! Your monthly ₹4,500 EMI is on schedule. You have unlocked a pre-approved inventory credit line of ₹25,000 at prime rates.`,
+    comp: [
+      { dim: 'Default Risk', trad: 'Very Low (<1%)', bad: false, cfs: 'Very Low (<1%)', good: true },
+      { dim: 'Customer Upsell', trad: 'Manual application process', bad: false, cfs: 'Instant automated top-up', good: true },
+      { dim: 'Borrower Retention', trad: 'Standard', bad: false, cfs: 'Top-tier loyal advocate', good: true },
+      { dim: 'MFI Recovery Probability', trad: '100%', bad: false, cfs: '100%', good: true }
+    ]
+  }
+];
+
+const statusColor = { seasonal:'var(--gold)', declining:'var(--coral)', healthy:'var(--teal)' };
+const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+let currentBorrowerId = 'meena';
+let selectedMonth = 0;
+let shockFactor = 0; // percentage shock from slider
+
+// Populate borrower buttons
+const listEl = document.getElementById('borrowerList');
+borrowers.forEach(b=>{
+  const el = document.createElement('button');
+  el.className = 'borrower-item';
+  el.setAttribute('data-id', b.id);
+  el.innerHTML = `
+    <span class="name"><span class="status-dot" style="background:${statusColor[b.status]}"></span>${b.name}</span>
+    <span class="role">${b.role}</span>
+  `;
+  el.addEventListener('click', ()=>render(b.id));
+  listEl.appendChild(el);
+});
+
+function getAdjustedIncome(b){
+  if(shockFactor === 0) return b.income;
+  return b.income.map(val => Math.max(800, Math.round(val * (1 + shockFactor / 100))));
+}
+
+function generatePayments(style, income, emi, monthIndex){
+  const amt = Math.round(income);
+  if(style === 'lump'){
+    const day = 4 + (monthIndex % 3);
+    return [{ day, amount: amt }];
+  }
+  if(style === 'weekly'){
+    const days = [6, 13, 20, 27];
+    const weights = days.map((d,i)=> 1 + 0.3*Math.sin(monthIndex*1.6 + i*2.2));
+    const wsum = weights.reduce((a,b)=>a+b,0);
+    let running = 0;
+    const out = days.map((d,i)=>{
+      const share = i === days.length-1 ? amt - running : Math.round(amt * weights[i]/wsum);
+      running += share;
+      return { day: d, amount: share };
+    });
+    return out.filter(p=>p.amount !== 0);
+  }
+  if(style === 'harvest'){
+    const p1 = Math.round(amt * 0.35);
+    return [{ day: 10, amount: p1 }, { day: 24, amount: amt - p1 }];
+  }
+  if(style === 'latePartial'){
+    const latenessDay = Math.min(6 + monthIndex*1.7, 29);
+    if(amt >= emi * 0.55 || amt <= 0){
+      return [{ day: Math.round(latenessDay), amount: amt }];
+    }
+    const first = Math.round(amt * 0.6);
+    return [
+      { day: Math.round(latenessDay), amount: first },
+      { day: Math.min(30, Math.round(latenessDay) + 6), amount: amt - first }
+    ];
+  }
+  return [{ day: 5, amount: amt }];
+}
+
+function buildPath(points){
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for(let i=0;i<points.length-1;i++){
+    const p0 = points[i-1] || points[i];
+    const p1 = points[i];
+    const p2 = points[i+1];
+    const p3 = points[i+2] || p2;
+    const cp1x = p1.x + (p2.x - p0.x)/6;
+    const cp1y = p1.y + (p2.y - p0.y)/6;
+    const cp2x = p2.x - (p3.x - p1.x)/6;
+    const cp2y = p2.y - (p3.y - p1.y)/6;
+    d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+  }
+  return d;
+}
+
+function drawChart(b){
+  const incomes = getAdjustedIncome(b);
+  const W=700, H=250, padL=46, padR=24, padT=20, padB=36;
+  const months = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+  const maxVal = Math.max(...incomes, b.emi) * 1.15;
+  const minVal = Math.min(...incomes, b.emi) * 0.82;
+  const xStep = (W - padL - padR) / (incomes.length - 1);
+  const yScale = v => H - padB - ((v - minVal) / (maxVal - minVal)) * (H - padT - padB);
+
+  const points = incomes.map((v,i)=>({x: padL + i * xStep, y: yScale(v), v}));
+  const emiY = yScale(b.emi);
+
+  let svg = '';
+  // Grid lines
+  svg += `<line x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}" stroke="var(--hair)" stroke-width="1"/>`;
+  svg += `<line x1="${padL}" y1="${emiY}" x2="${W-padR}" y2="${emiY}" stroke="var(--ink-faint)" stroke-width="1.4" stroke-dasharray="4 5"/>`;
+  svg += `<text x="${W-padR}" y="${emiY-7}" text-anchor="end" font-family="IBM Plex Mono" font-size="11" fill="var(--ink-faint)">Fixed EMI ₹${b.emi.toLocaleString('en-IN')}</text>`;
+
+  const areaPath = buildPath(points) + ` L ${points[points.length-1].x} ${H-padB} L ${points[0].x} ${H-padB} Z`;
+  svg += `<path d="${areaPath}" fill="url(#grad-${b.id})" opacity="0.35"/>`;
+  svg += `<path d="${buildPath(points)}" fill="none" stroke="var(--ink-hi)" stroke-width="2.4"/>`;
+
+  points.forEach((p,i)=>{
+    const covered = incomes[i] >= b.emi;
+    const selected = i === selectedMonth;
+    svg += `<circle cx="${p.x}" cy="${p.y}" r="10" fill="var(--gold)" fill-opacity="${selected ? '0.24' : '0'}"/>`;
+    svg += `<circle class="month-dot" data-idx="${i}" cx="${p.x}" cy="${p.y}" r="12" fill="transparent" style="cursor:pointer"/>`;
+    svg += `<circle cx="${p.x}" cy="${p.y}" r="4.5" fill="${covered ? 'var(--teal)' : 'var(--coral)'}" stroke="${selected ? 'var(--gold)' : 'var(--surface-0)'}" stroke-width="${selected ? '2.5' : '1.5'}" pointer-events="none"/>`;
+    svg += `<text x="${p.x}" y="${H-padB+18}" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="${selected ? 'var(--ink-hi)' : 'var(--ink-faint)'}" pointer-events="none">${months[i]}</text>`;
+  });
+
+  const svgEl = document.getElementById('chart');
+  svgEl.innerHTML = `
+    <defs>
+      <linearGradient id="grad-${b.id}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${b.status==='declining'?'#E2694F':(b.status==='seasonal'?'#C9A227':'#4FBF9F')}" stop-opacity="0.6"/>
+        <stop offset="100%" stop-color="${b.status==='declining'?'#E2694F':(b.status==='seasonal'?'#C9A227':'#4FBF9F')}" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    ${svg}
+  `;
+
+  svgEl.querySelectorAll('.month-dot').forEach(dot=>{
+    dot.addEventListener('click', ()=>{
+      selectedMonth = parseInt(dot.getAttribute('data-idx'), 10);
+      drawChart(b);
+      renderBreakdown(b);
+    });
+  });
+
+  document.getElementById('noteBlock').innerHTML =
+    `<strong>Rhythm Analysis:</strong> The solid white curve represents ${b.name.split(' ')[0]}'s real-world cash flow (${b.location}). The dashed line marks the traditional rigid monthly EMI (₹${b.emi.toLocaleString('en-IN')}). Red shortfall markers do NOT mean default—they show seasonal timing differences. Click any month below to inspect daily inflows.`;
+}
+
+function renderBreakdown(b){
+  const incomes = getAdjustedIncome(b);
+  const picker = document.getElementById('monthPicker');
+  const shortMonths = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+  picker.innerHTML = incomes.map((v,i)=>{
+    const short = v < b.emi;
+    return `<button class="month-chip ${short?'shortfall':''} ${i===selectedMonth?'active':''}" data-idx="${i}">${shortMonths[i]}</button>`;
+  }).join('');
+
+  picker.querySelectorAll('.month-chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      selectedMonth = parseInt(chip.getAttribute('data-idx'), 10);
+      drawChart(b);
+      renderBreakdown(b);
+    });
+  });
+
+  const income = incomes[selectedMonth];
+  const payments = generatePayments(b.payStyle, income, b.emi, selectedMonth).sort((a,c)=>a.day-c.day);
+  const total = payments.reduce((s,p)=>s+p.amount, 0);
+
+  const ledger = document.getElementById('ledger');
+  const rows = payments.map(p=>
+    `<div class="ledger-row"><span class="tx-date">${monthNames[selectedMonth].slice(0,3)} ${p.day}</span><span class="tx-amount">₹${p.amount.toLocaleString('en-IN')}</span></div>`
+  ).join('');
+  ledger.innerHTML = rows + `<div class="ledger-row total"><span class="tx-date">Total Month Inflow</span><span class="tx-amount">₹${total.toLocaleString('en-IN')} <span style="color:var(--ink-faint); font-weight:normal;">/ ₹${b.emi.toLocaleString('en-IN')} calendar due</span></span></div>`;
+
+  const statusEl = document.getElementById('breakdownStatus');
+  const lastDay = payments[payments.length-1].day;
+  if(total >= b.emi && lastDay <= 12){
+    statusEl.className = 'breakdown-status ok';
+    statusEl.textContent = `Fully covered across ${payments.length} inflow event${payments.length>1?'s':''}, early in cycle. Zero liquidity stress.`;
+  } else if(total >= b.emi){
+    statusEl.className = 'breakdown-status late';
+    statusEl.textContent = `Sufficient monthly total across ${payments.length} inflow event${payments.length>1?'s':''}, but final tranche arrives on day ${lastDay}. Flexible due-date buffer prevents false bounce alert.`;
+  } else {
+    statusEl.className = 'breakdown-status short';
+    statusEl.textContent = `Cash flow shortfall of ₹${(b.emi-total).toLocaleString('en-IN')} this month. CashFlowSense absorbs this via adaptive seasonal re-indexing.`;
+  }
+}
+
+function render(id){
+  currentBorrowerId = id;
+  const b = borrowers.find(x=>x.id===id);
+  const incomes = getAdjustedIncome(b);
+  const firstShortfall = incomes.findIndex(v=>v < b.emi);
+  selectedMonth = firstShortfall !== -1 ? firstShortfall : 0;
+
+  document.querySelectorAll('.borrower-item').forEach(el=>{
+    el.classList.toggle('active', el.getAttribute('data-id')===id);
+  });
+
+  document.getElementById('bName').textContent = b.name;
+  document.getElementById('bMetaSubtitle').textContent = `${b.role} · ${b.location}`;
+  const pill = document.getElementById('statusPill');
+  pill.textContent = b.statusLabel;
+  pill.className = 'status-pill ' + b.status;
+
+  // Confidence
+  document.getElementById('confVal').textContent = b.confidence;
+  document.getElementById('confBar').style.width = b.confidencePct + '%';
+
+  drawChart(b);
+  renderBreakdown(b);
+
+  document.getElementById('evidenceList').innerHTML = b.evidence.map(e=>`<li>${e}</li>`).join('');
+  document.getElementById('planSummary').textContent = b.planSummary;
+  document.getElementById('planRows').innerHTML = b.plan.map(([label,value,tag])=>
+    `<div class="plan-row"><span class="label">${label}</span><span class="value ${tag}">${value}</span></div>`
+  ).join('');
+
+  // Setup WhatsApp text
+  document.getElementById('whatsappContent').innerHTML = b.whatsappMsg.replace(/\n/g, '<br>') + `<div class="whatsapp-meta">Delivered · CashFlowSense Bot</div>`;
+
+  // Setup Comparison Table
+  document.getElementById('compTableBody').innerHTML = b.comp.map(c=>`
+    <tr>
+      <td style="font-weight:600; color:var(--ink-hi);">${c.dim}</td>
+      <td class="${c.bad ? 'bad' : ''}">${c.trad}</td>
+      <td class="${c.good ? 'good' : ''}">${c.cfs}</td>
+    </tr>
+  `).join('');
+}
+
+// Shock Simulator Interaction
+const toggleShockBtn = document.getElementById('toggleShockBtn');
+const simulatorStrip = document.getElementById('simulatorStrip');
+const shockSlider = document.getElementById('shockSlider');
+const shockLabel = document.getElementById('shockLabel');
+const resetShockBtn = document.getElementById('resetShockBtn');
+
+toggleShockBtn.addEventListener('click', ()=>{
+  const isShown = simulatorStrip.style.display !== 'none';
+  simulatorStrip.style.display = isShown ? 'none' : 'flex';
+  toggleShockBtn.classList.toggle('active', !isShown);
+});
+
+shockSlider.addEventListener('input', (e)=>{
+  shockFactor = parseInt(e.target.value, 10);
+  shockLabel.textContent = `${shockFactor >= 0 ? '+' : ''}${shockFactor}% Stress/Surge`;
+  const b = borrowers.find(x=>x.id===currentBorrowerId);
+  drawChart(b);
+  renderBreakdown(b);
+});
+
+resetShockBtn.addEventListener('click', ()=>{
+  shockFactor = 0;
+  shockSlider.value = 0;
+  shockLabel.textContent = '0% (Baseline)';
+  const b = borrowers.find(x=>x.id===currentBorrowerId);
+  drawChart(b);
+  renderBreakdown(b);
+});
+
+// Comparison Modal
+const compModal = document.getElementById('compModal');
+document.getElementById('openCompBtn').addEventListener('click', ()=> compModal.classList.add('active'));
+document.getElementById('closeCompModal').addEventListener('click', ()=> compModal.classList.remove('active'));
+
+// WhatsApp Modal
+const notifyModal = document.getElementById('notifyModal');
+document.getElementById('openNotifyBtn').addEventListener('click', ()=> notifyModal.classList.add('active'));
+document.getElementById('closeNotifyModal').addEventListener('click', ()=> notifyModal.classList.remove('active'));
+
+document.getElementById('sendSimulatedSMS').addEventListener('click', ()=>{
+  const btn = document.getElementById('sendSimulatedSMS');
+  const old = btn.textContent;
+  btn.textContent = '✓ Dispatched to SMS/WhatsApp Gateway';
+  setTimeout(()=>{ btn.textContent = old; notifyModal.classList.remove('active'); }, 1500);
+});
+
+// Close modals on clicking overlay outside
+window.addEventListener('click', (e)=>{
+  if(e.target === compModal) compModal.classList.remove('active');
+  if(e.target === notifyModal) notifyModal.classList.remove('active');
+});
+
+// Action Buttons
+document.getElementById('applyBtn').addEventListener('click', ()=>{
+  const btn = document.getElementById('applyBtn');
+  btn.textContent = 'Plan Approved & CBS Synced ✓';
+  btn.style.background = 'var(--teal)';
+  setTimeout(()=>{
+    btn.textContent = 'Apply plan';
+    btn.style.background = 'var(--gold)';
+  }, 2000);
+});
+
+document.getElementById('overrideBtn').addEventListener('click', ()=>{
+  const btn = document.getElementById('overrideBtn');
+  btn.textContent = 'Escalated to Credit Committee';
+  setTimeout(()=>{ btn.textContent = 'Override'; }, 1800);
+});
+
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const b = borrowers.find(x=>x.id===currentBorrowerId);
+  const data = {
+    borrowerId: b.id,
+    borrowerName: b.name,
+    status: b.status,
+    recommendation: b.planSummary,
+    schedule: b.plan,
+    exportTimestamp: new Date().toISOString(),
+    system: 'CashFlowSense-CoreBanking-Adapter v1.2'
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `CashFlowSense_${b.id}_schedule.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// Initial Render
+render(borrowers[0].id);
+</script>
+</body>
+</html>

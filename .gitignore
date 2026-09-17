@@ -1,0 +1,16 @@
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE Directories
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node / Scratch files (if any in future)
+node_modules/
+dist/
+build/
+*.log
